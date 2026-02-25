@@ -1,17 +1,17 @@
--- Target Lock System (Aimlock)
+-- Target Lock System
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
--- 1. Interface Setup
+-- 1. Create UI
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "AimlockConsole"
+screenGui.Name = "AimlockSystem"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = PlayerGui
 
--- 2. Main Horizontal Frame
+-- 2. Horizontal Rectangle Frame
 local mainFrame = Instance.new("Frame")
 mainFrame.Size = UDim2.new(0, 260, 0, 65)
 mainFrame.Position = UDim2.new(0.5, -130, 0.2, 0)
@@ -23,28 +23,28 @@ local uiCorner = Instance.new("UICorner")
 uiCorner.CornerRadius = UDim.new(0, 10)
 uiCorner.Parent = mainFrame
 
--- 3. Rainbow Border (RGB Effect)
+-- 3. RGB Border Effect
 RunService.RenderStepped:Connect(function()
-    local hue = tick() % 3 / 3
+    local hue = tick() % 4 / 4
     mainFrame.BorderColor3 = Color3.fromHSV(hue, 1, 1)
 end)
 
--- 4. The Lock Button
-local lockButton = Instance.new("TextButton")
-lockButton.Size = UDim2.new(0.9, 0, 0.7, 0)
-lockButton.Position = UDim2.new(0.05, 0, 0.15, 0)
-lockButton.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-lockButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-lockButton.TextSize = 18
-lockButton.Font = Enum.Font.GothamBold
-lockButton.Text = "AIMLOCK: OFF"
-lockButton.Parent = mainFrame
+-- 4. Toggle Button
+local toggleBtn = Instance.new("TextButton")
+toggleBtn.Size = UDim2.new(0.9, 0, 0.7, 0)
+toggleBtn.Position = UDim2.new(0.05, 0, 0.15, 0)
+toggleBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleBtn.TextSize = 18
+toggleBtn.Font = Enum.Font.GothamBold
+toggleBtn.Text = "AIMLOCK: OFF"
+toggleBtn.Parent = mainFrame
 
 local btnCorner = Instance.new("UICorner")
 btnCorner.CornerRadius = UDim.new(0, 8)
-btnCorner.Parent = lockButton
+btnCorner.Parent = toggleBtn
 
--- 5. Dragging System (Move the menu anywhere)
+-- 5. Draggable Logic
 local dragging, dragInput, dragStart, startPos
 mainFrame.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -63,27 +63,21 @@ UserInputService.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
 end)
 
--- 6. Execution Logic (Link to your GitHub)
-local isToggled = false
-
-lockButton.MouseButton1Click:Connect(function()
-    isToggled = not isToggled
-    if isToggled then
-        -- Action: ON
-        lockButton.Text = "AIMLOCK: ON"
-        lockButton.BackgroundColor3 = Color3.fromRGB(0, 180, 80)
+-- 6. Execution (Corrected Raw Link)
+local isActive = false
+toggleBtn.MouseButton1Click:Connect(function()
+    isActive = not isActive
+    if isActive then
+        toggleBtn.Text = "AIMLOCK: ON"
+        toggleBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 100)
         
-        -- Load your specific ghim script
+        -- Chạy link Raw từ GitHub của bạn
         pcall(function()
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/minhdat89mt-eng/Aimbot/refs/heads/main/Aimlock.lua"))()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/minhdat89mt-eng/Aimbot/main/Aimlock.lua"))()
         end)
     else
-        -- Action: OFF
-        lockButton.Text = "AIMLOCK: OFF"
-        lockButton.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
-        -- Note: To stop the ghim, you might need to reset your character 
-        -- unless your .lua file has a built-in disable function.
+        toggleBtn.Text = "AIMLOCK: OFF"
+        toggleBtn.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
+        -- Lưu ý: Bạn cần Reset nhân vật để hủy ghim nếu script gốc không có nút tắt
     end
 end)
-
-print("System: Aimlock Menu with RGB Border is active.")
