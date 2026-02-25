@@ -1,21 +1,25 @@
--- Universal Aimlock Manager (No Reset Version)
+-- Global Settings
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
--- UI Setup
-local screenGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
-screenGui.Name = "SmartAimlockUI"
+-- UI Cleanup to fix the "Infinite Buttons" error
+if LocalPlayer.PlayerGui:FindFirstChild("UniversalAimlock") then
+    LocalPlayer.PlayerGui.UniversalAimlock:Destroy()
+end
+
+local screenGui = Instance.new("ScreenGui", LocalPlayer.PlayerGui)
+screenGui.Name = "UniversalAimlock"
 screenGui.ResetOnSpawn = false
 
 local mainFrame = Instance.new("Frame", screenGui)
 mainFrame.Size = UDim2.new(0, 260, 0, 70)
-mainFrame.Position = UDim2.new(0.5, -130, 0.1, 0)
+mainFrame.Position = UDim2.new(0.5, -130, 0.2, 0)
 mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 mainFrame.BorderSizePixel = 4
-mainFrame.Draggable = true
 mainFrame.Active = true
+mainFrame.Draggable = true
 Instance.new("UICorner", mainFrame)
 
 -- RGB Border
@@ -33,46 +37,50 @@ toggleBtn.Font = Enum.Font.GothamBold
 toggleBtn.TextSize = 18
 Instance.new("UICorner", toggleBtn)
 
--- Logic tắt không cần die
-local isEnabled = false
+-- AIMLOCK ENGINE (The core logic)
+local isLocked = false
+local currentTarget = nil
 
+local function getClosestPlayer()
+    local closest = nil
+    local dist = math.huge
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+            local pos, onScreen = Camera:WorldToViewportPoint(p.Character.HumanoidRootPart.Position)
+            if onScreen then
+                local magnitude = (Vector2.new(pos.X, pos.Y) - Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)).Magnitude
+                if magnitude < dist then
+                    closest = p.Character.HumanoidRootPart
+                    dist = magnitude
+                end
+            end
+        end
+    end
+    return closest
+end
+
+-- Fast Loop for Locking
+RunService.RenderStepped:Connect(function()
+    if isLocked then
+        currentTarget = getClosestPlayer()
+        if currentTarget then
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, currentTarget.Position)
+        end
+    end
+end)
+
+-- Toggle Logic
 toggleBtn.MouseButton1Click:Connect(function()
-    isEnabled = not isEnabled
-    
-    if isEnabled then
-        -- TRẠNG THÁI BẬT
-        toggleBtn.Text = "AIMLOCK: ON"
+    isLocked = not isLocked
+    if isLocked then
+        toggleBtn.Text = "AIMLOCK: ACTIVE"
         toggleBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 100)
-        
-        pcall(function()
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/minhdat89mt-eng/Aimbot/main/Aimlock.lua"))()
-        end)
+        -- Still try to load your GitHub script just in case it has extra features
+        pcall(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/minhdat89mt-eng/Aimbot/main/Aimlock.lua"))() end)
     else
-        -- TRẠNG THÁI TẮT (KHÔNG CẦN RESET)
-        toggleBtn.Text = "STOPPING..."
-        toggleBtn.BackgroundColor3 = Color3.fromRGB(200, 80, 0)
-        
-        -- 1. Ép Camera về trạng thái tự do
-        Camera.CameraType = Enum.CameraType.Custom
-        Camera.CameraSubject = LocalPlayer.Character:FindFirstChild("Humanoid")
-        
-        -- 2. "Bẻ gãy" các vòng lặp ngầm (Master Cleaner)
-        -- Hầu hết script ghim tâm đều dùng biến Global hoặc kết nối RunService
-        for i, v in pairs(getconnections(RunService.RenderStepped)) do
-            v:Disable() -- Vô hiệu hóa các vòng lặp render
-        end
-        for i, v in pairs(getconnections(RunService.Heartbeat)) do
-            v:Disable() 
-        end
-        
-        -- 3. Xóa các biến Global mà script Aimlock thường dùng
-        _G.Aimbot = false
-        _G.Aimlock = false
-        getgenv().Aimbot = false
-        getgenv().Aimlock = false
-        
-        task.wait(0.5)
         toggleBtn.Text = "STATUS: OFF"
         toggleBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+        currentTarget = nil
+        Camera.CameraType = Enum.CameraType.Custom
     end
 end)
